@@ -1,133 +1,203 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cesar Modas - Nosotros</title>
-    <link rel="icon" type="image/jpeg" href="images/logo-fondo-blanco.jpeg">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="estilos.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nosotros — Cesar Modas</title>
+  <link rel="icon" type="image/jpeg" href="images/logo-fondo-blanco.jpeg">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="estilos.css">
 </head>
 <body>
-    <!-- Header -->
-    <header>
-        <a href="index.html" class="logo"><img src="images/logofondo-transparente.png" alt="Cesar Modas" style="height: 40px;"></a>
-        <nav>
-            <a href="index.html">Inicio</a>
-            <a href="tienda.html">Tienda</a>
-            <a href="nosotros.html" class="activo">Nosotros</a>
-            <a href="contacto.html">Contacto</a>
-        </nav>
-    </header>
 
-    <!-- Carrito -->
-    <div class="carrito-icono" onclick="toggleCarrito()">
-        <i class="fas fa-shopping-bag"></i>
-        <span id="contador">0</span>
+  <!-- ===== NAVBAR ===== -->
+  <header class="navbar">
+    <nav class="nav-left">
+      <a href="index.html" class="nav-link">Inicio</a>
+      <a href="tienda.html" class="nav-link">Tienda</a>
+    </nav>
+
+    <a href="index.html" class="nav-logo">
+      <img src="images/logofondo-transparente.png" alt="Cesar Modas">
+    </a>
+
+    <div class="nav-right">
+      <a href="nosotros.html" class="nav-link active">Nosotros</a>
+      <a href="contacto.html" class="nav-link">Contacto</a>
+      <button class="cart-btn" onclick="toggleCarrito()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
+          <line x1="3" y1="6" x2="21" y2="6"/>
+          <path d="M16 10a4 4 0 01-8 0"/>
+        </svg>
+        <span class="label">Bolsa</span>
+        <span class="cart-count">0</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ===== CART OVERLAY + DRAWER ===== -->
+  <div class="cart-overlay" id="cartOverlay" onclick="cerrarCarrito()"></div>
+
+  <aside class="cart-drawer" id="cartDrawer">
+    <div class="drawer-head">
+      <h3>Bolsa de Compras</h3>
+      <button class="drawer-close" onclick="cerrarCarrito()">
+        <i class="fas fa-times"></i>
+      </button>
     </div>
 
-    <div class="overlay" id="overlay" onclick="toggleCarrito()"></div>
-
-    <div class="carrito-panel" id="carritoPanel">
-        <h3>Bolsa de Compras</h3>
-        <div id="carritoVacio" class="carrito-vacio">
-            <div class="carrito-vacio-icon"><i class="fas fa-box"></i></div>
-            <p>Tu bolsa está vacía</p>
-        </div>
-        <ul id="listaCarrito"></ul>
-        <div class="carrito-resumen">
-            <div class="carrito-total">
-                <span>Total:</span>
-                <span>S/ <span id="total">0.00</span></span>
-            </div>
-            <div class="carrito-botones">
-                <button class="btn-comprar" onclick="abrirModalCompra()">Proceder a Compra</button>
-                <button class="btn-vaciar" onclick="vaciarCarrito()">Vaciar Bolsa</button>
-            </div>
-        </div>
+    <div class="drawer-items" id="drawerItems">
+      <div class="drawer-empty" id="drawerEmpty">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+          <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
+          <line x1="3" y1="6" x2="21" y2="6"/>
+          <path d="M16 10a4 4 0 01-8 0"/>
+        </svg>
+        <p>Tu bolsa está vacía</p>
+      </div>
     </div>
 
-    <!-- Modal de Compra -->
-    <div class="modal" id="modalCompra">
-        <div class="modal-contenido">
-            <span class="modal-close" onclick="cerrarModalCompra()">&times;</span>
-            <h2>Finalizar Compra</h2>
-            <div class="modal-resumen" id="resumenCompra"></div>
-            <form id="formCompra" onsubmit="procesarCompra(event)">
-                <div class="form-group">
-                    <label for="nombre">Nombre Completo *</label>
-                    <input type="text" id="nombre" name="nombre" required>
-                </div>
-                <div class="form-group">
-                    <label for="email">Correo Electrónico *</label>
-                    <input type="email" id="email" name="email" required>
-                </div>
-                <div class="form-group">
-                    <label for="telefono">Teléfono *</label>
-                    <input type="tel" id="telefono" name="telefono" required>
-                </div>
-                <div class="form-group">
-                    <label for="direccion">Dirección de Entrega *</label>
-                    <textarea id="direccion" name="direccion" required></textarea>
-                </div>
-                <div class="form-group">
-                    <label for="notas">Notas Adicionales</label>
-                    <textarea id="notas" name="notas" placeholder="Especificaciones, tamaños, colores, etc..."></textarea>
-                </div>
-                <button type="submit" style="width:100%;background:#000;color:white;border-color:#000;padding:15px;">
-                    Completar Compra
-                </button>
-            </form>
-        </div>
+    <div class="drawer-foot">
+      <div class="drawer-total">
+        <span>Total</span>
+        <span id="drawerTotal">S/ 0.00</span>
+      </div>
+      <div class="drawer-actions">
+        <button class="btn-primary" onclick="abrirModalCompra()">Proceder a Compra</button>
+        <button class="btn-ghost" onclick="vaciarCarrito()">Vaciar Bolsa</button>
+      </div>
     </div>
+  </aside>
 
-    <!-- Encabezado de página -->
-    <div class="page-header">
-        <h1>SOBRE NOSOTROS</h1>
-        <p>Lujo Accesible, Calidad Absoluta</p>
+  <!-- ===== PURCHASE MODAL ===== -->
+  <div class="modal-backdrop" id="modalCompra" onclick="if(event.target===this)cerrarModalCompra()">
+    <div class="modal-box">
+      <div class="modal-head">
+        <h2>Finalizar Compra</h2>
+        <button class="modal-close" onclick="cerrarModalCompra()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="modal-scroll">
+        <div class="modal-summary" id="modalResumen"></div>
+        <form id="formCompra" onsubmit="procesarCompra(event)">
+          <div class="form-group form-group-half">
+            <label>Nombre *</label>
+            <input type="text" id="nombre" required placeholder="Juan">
+          </div>
+          <div class="form-group form-group-half">
+            <label>Apellido *</label>
+            <input type="text" id="apellido" required placeholder="García López">
+          </div>
+          <div class="form-group">
+            <label>Correo Electrónico *</label>
+            <input type="email" id="email" required placeholder="tu.correo@ejemplo.com">
+          </div>
+          <div class="form-group">
+            <label>Teléfono / WhatsApp *</label>
+            <input type="tel" id="telefono" required placeholder="+51 999 888 777">
+          </div>
+          <div class="form-group form-group-half">
+            <label>Región/Departamento *</label>
+            <select id="region" required>
+              <option value="">Seleccionar...</option>
+              <option value="Lima">Lima</option>
+              <option value="Arequipa">Arequipa</option>
+              <option value="Callao">Callao</option>
+              <option value="La Libertad">La Libertad</option>
+              <option value="Ayacucho">Ayacucho</option>
+              <option value="Junín">Junín</option>
+              <option value="Otras">Otra región</option>
+            </select>
+          </div>
+          <div class="form-group form-group-half">
+            <label>Distrito/Provincia *</label>
+            <input type="text" id="distrito" required placeholder="San Isidro">
+          </div>
+          <div class="form-group">
+            <label>Dirección Principal *</label>
+            <input type="text" id="direccion" required placeholder="Av. Paseo de la República 3500">
+          </div>
+          <div class="form-group form-group-half">
+            <label>Número/Casa *</label>
+            <input type="text" id="numero" required placeholder="Apt. 1203">
+          </div>
+          <div class="form-group form-group-half">
+            <label>Código Postal</label>
+            <input type="text" id="codigo" placeholder="15073">
+          </div>
+          <div class="form-group">
+            <label>Referencia</label>
+            <input type="text" id="referencia" placeholder="Frente a banco BCP">
+          </div>
+          <div class="form-group">
+            <label>Método de Pago *</label>
+            <select id="metodo" required>
+              <option value="">Seleccionar...</option>
+              <option value="Transferencia">Transferencia Bancaria</option>
+              <option value="Depósito">Depósito en Cuenta</option>
+              <option value="Efectivo">Efectivo contra Entrega</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Notas Especiales</label>
+            <textarea id="notas" placeholder="Talla, color, preferencias de horario…"></textarea>
+          </div>
+          <button type="submit" class="modal-submit">
+            Completar Compra
+          </button>
+        </form>
+      </div>
     </div>
+  </div>
 
-    <!-- Contenido -->
-    <div class="info-page">
-        <h2>Nuestra Historia</h2>
-        <p>Cesar Modas es una marca de moda premium dedicada a ofrecer prendas de excelencia absoluta. Desde nuestros inicios, nos comprometemos con la calidad superior, los diseños exclusivos y la elegancia sin compromisos.</p>
-        <p>Cada pieza en nuestra colección es cuidadosamente seleccionada y confeccionada con los mejores materiales del mundo. Creemos que la verdadera moda es aquella que trasciende las tendencias y se convierte en un símbolo de distinción personal.</p>
-        <p>Desde el corazón de Perú, llevamos lujo a cada rincón, con envíos nacionales e internacionales para aquellos que entienden que la calidad no tiene precio.</p>
+  <!-- ===== PAGE HEADER ===== -->
+  <div class="page-header">
+    <span class="eyebrow">Nuestra Historia</span>
+    <h1>Sobre Nosotros</h1>
+    <p>Lujo Accesible · Calidad Absoluta · Desde el Corazón del Perú</p>
+  </div>
 
-        <h2 style="margin-top: 50px;">Nuestros Valores</h2>
+  <!-- ===== CONTENT ===== -->
+  <div class="info-page">
+    <h2>Quiénes Somos</h2>
+    <p>Cesar Modas es una marca de moda premium dedicada a ofrecer prendas de excelencia absoluta. Desde nuestros inicios, nos comprometemos con la calidad superior, los diseños exclusivos y la elegancia sin compromisos.</p>
+    <p>Cada pieza en nuestra colección es cuidadosamente seleccionada y confeccionada con los mejores materiales del mundo. Creemos que la verdadera moda es aquella que trasciende las tendencias y se convierte en un símbolo de distinción personal.</p>
+    <p>Desde el corazón de Perú, llevamos lujo a cada rincón — con envíos nacionales e internacionales para quienes entienden que la calidad no tiene precio.</p>
 
-        <div class="info-grid">
-            <div class="info-card">
-                <div class="icono"><i class="fas fa-gem"></i></div>
-                <h3>LUJO</h3>
-                <p>Cada prenda representa el pico de la excelencia y la sofisticación en moda.</p>
-            </div>
-            <div class="info-card">
-                <div class="icono"><i class="fas fa-crown"></i></div>
-                <h3>DISTINCIÓN</h3>
-                <p>Ropa para aquellos que saben lo que quieren y no aceptan mediocridad.</p>
-            </div>
-            <div class="info-card">
-                <div class="icono"><i class="fas fa-certificate"></i></div>
-                <h3>EXCLUSIVIDAD</h3>
-                <p>Colecciones limitadas que garantizan tu singularidad y elegancia.</p>
-            </div>
-            <div class="info-card">
-                <div class="icono"><i class="fas fa-handshake"></i></div>
-                <h3>SERVICIO</h3>
-                <p>Atención concierge para una experiencia de compra incomparable.</p>
-            </div>
-        </div>
+    <h2 style="margin-top: 60px;">Nuestros Valores</h2>
+
+    <div class="info-grid">
+      <div class="info-card">
+        <div class="icono"><i class="fas fa-gem"></i></div>
+        <h3>Lujo</h3>
+        <p>Cada prenda representa el pico de la excelencia y la sofisticación en moda.</p>
+      </div>
+      <div class="info-card">
+        <div class="icono"><i class="fas fa-crown"></i></div>
+        <h3>Distinción</h3>
+        <p>Ropa para quienes saben lo que quieren y no aceptan la mediocridad.</p>
+      </div>
+      <div class="info-card">
+        <div class="icono"><i class="fas fa-certificate"></i></div>
+        <h3>Exclusividad</h3>
+        <p>Colecciones limitadas que garantizan tu singularidad y elegancia única.</p>
+      </div>
+      <div class="info-card">
+        <div class="icono"><i class="fas fa-handshake"></i></div>
+        <h3>Servicio</h3>
+        <p>Atención personalizada para una experiencia de compra incomparable.</p>
+      </div>
     </div>
+  </div>
 
-    <!-- Footer -->
-    <footer>
-        © 2026 CESAR MODAS - Todos los derechos reservados | Diseño Premium Exclusivo
-    </footer>
+  <!-- ===== FOOTER ===== -->
+  <footer>
+    <span class="footer-copy">© 2026 Cesar Modas — Todos los derechos reservados</span>
+    <span class="footer-brand">CESAR MODAS</span>
+  </footer>
 
-    <!-- WhatsApp -->
-    <a href="https://wa.me/51922277161?text=Hola%2C%20me%20interesa%20conocer%20m%C3%A1s%20sobre%20sus%20productos" target="_blank" class="whatsapp" title="Contáctanos por WhatsApp"><i class="fas fa-comment"></i></a>
-
-    <script src="carrito.js"></script>
+  <script src="carrito.js"></script>
 </body>
 </html>

@@ -1,309 +1,330 @@
-// Carrito persistente con localStorage
-let carrito = JSON.parse(localStorage.getItem("carrito")) || [];
-let total = parseFloat(localStorage.getItem("carritoTotal")) || 0;
+/* =============================================
+   CESAR MODAS — carrito.js
+   Cart logic + Modal + Notifications
+   ============================================= */
 
-// Inicializar al cargar la página
-document.addEventListener("DOMContentLoaded", () => {
-  actualizarCarrito();
-  inicializarAnimaciones();
-});
+let carrito = JSON.parse(localStorage.getItem("cm_carrito")) || [];
 
-function inicializarAnimaciones() {
-  // Agregar estilos de animación globales
-  const style = document.createElement("style");
-  style.innerHTML = `
-    @keyframes slideIn {
-      from { transform: translateX(400px); opacity: 0; }
-      to   { transform: translateX(0);     opacity: 1; }
-    }
-    @keyframes slideOut {
-      from { transform: translateX(0);     opacity: 1; }
-      to   { transform: translateX(400px); opacity: 0; }
-    }
-    @keyframes popIn {
-      from { transform: scale(0.8); opacity: 0; }
-      to   { transform: scale(1);   opacity: 1; }
-    }
-  `;
-  document.head.appendChild(style);
+/* ---- Persist ---- */
+function guardar() {
+  localStorage.setItem("cm_carrito", JSON.stringify(carrito));
 }
 
-function guardarCarrito() {
-  localStorage.setItem("carrito", JSON.stringify(carrito));
-  localStorage.setItem("carritoTotal", total.toFixed(2));
+/* ---- Total ---- */
+function calcTotal() {
+  return carrito.reduce((s, p) => s + p.precio * p.cantidad, 0);
 }
 
+/* ---- Add to cart ---- */
 function agregarCarrito(nombre, precio) {
-  const productoExistente = carrito.find((p) => p.nombre === nombre);
-  if (productoExistente) {
-    productoExistente.cantidad++;
-  } else {
-    carrito.push({ nombre, precio, cantidad: 1 });
+  try {
+    const existe = carrito.find((p) => p.nombre === nombre);
+    if (existe) {
+      existe.cantidad++;
+    } else {
+      carrito.push({ nombre, precio, cantidad: 1 });
+    }
+    guardar();
+    renderCarrito();
+
+    // Auto-open cart drawer to show the product was added
+    const drawer = document.getElementById("cartDrawer");
+    const overlay = document.getElementById("cartOverlay");
+    if (drawer && overlay) {
+      drawer.classList.add("open");
+      overlay.classList.add("open");
+    }
+
+    notif(`✓ ${nombre} agregado a tu bolsa`);
+  } catch (e) {
+    console.error("Error en agregarCarrito:", e);
+    notif("Error al agregar producto. Recarga la página.");
   }
-  total += precio;
-  guardarCarrito();
-  actualizarCarrito();
-  mostrarNotificacion(`✓ ${nombre} agregado a tu bolsa`);
 }
 
-function actualizarCarrito() {
-  const lista = document.getElementById("listaCarrito");
-  const contador = document.getElementById("contador");
-  const totalElemento = document.getElementById("total");
-  const carritoVacio = document.getElementById("carritoVacio");
-
-  lista.innerHTML = "";
-
-  if (carrito.length === 0) {
-    carritoVacio.style.display = "flex";
-  } else {
-    carritoVacio.style.display = "none";
-    carrito.forEach((producto, index) => {
-      const subtotal = producto.precio * producto.cantidad;
-      const li = document.createElement("li");
-      li.className = "carrito-item";
-      li.innerHTML = `
-        <div class="carrito-item-info">
-          <div class="carrito-item-nombre">${producto.nombre}</div>
-          <div class="carrito-item-cantidad">Cantidad: ${producto.cantidad}</div>
-        </div>
-        <div class="carrito-item-precio">S/ ${subtotal.toFixed(2)}</div>
-        <button class="carrito-item-eliminar" onclick="eliminarDelCarrito(${index})" title="Eliminar">
-          <i class="fas fa-times"></i>
-        </button>
-      `;
-      lista.appendChild(li);
-    });
+/* ---- Change quantity ---- */
+function cambiarCantidad(idx, delta) {
+  if (!carrito[idx]) return;
+  carrito[idx].cantidad += delta;
+  if (carrito[idx].cantidad <= 0) {
+    carrito.splice(idx, 1);
   }
-
-  contador.textContent = carrito.reduce((sum, p) => sum + p.cantidad, 0);
-  totalElemento.textContent = total.toFixed(2);
+  guardar();
+  renderCarrito();
 }
 
-function eliminarDelCarrito(index) {
-  const subtotal = carrito[index].precio * carrito[index].cantidad;
-  total -= subtotal;
-  if (total < 0) total = 0;
-  carrito.splice(index, 1);
-  guardarCarrito();
-  actualizarCarrito();
-  mostrarNotificacion("✗ Producto eliminado");
+/* ---- Remove item ---- */
+function eliminarItem(idx) {
+  carrito.splice(idx, 1);
+  guardar();
+  renderCarrito();
 }
 
-function toggleCarrito() {
-  const panel = document.getElementById("carritoPanel");
-  const overlay = document.getElementById("overlay");
-  panel.classList.toggle("active");
-  overlay.classList.toggle("active");
-}
-
+/* ---- Empty cart ---- */
 function vaciarCarrito() {
   if (carrito.length === 0) {
-    mostrarNotificacion("La bolsa ya está vacía");
+    notif("La bolsa ya está vacía");
     return;
   }
-  if (confirm("¿Estás seguro de que deseas vaciar tu bolsa?")) {
-    carrito = [];
-    total = 0;
-    guardarCarrito();
-    actualizarCarrito();
-    mostrarNotificacion("Bolsa vaciada");
+  if (!confirm("¿Vaciar la bolsa de compras?")) return;
+  carrito = [];
+  guardar();
+  renderCarrito();
+  notif("Bolsa vaciada");
+}
+
+/* ---- Render drawer ----
+   FIX: El bug original era que #drawerEmpty vivía DENTRO de #drawerItems.
+   Al hacer lista.innerHTML = "" o reemplazarlo con productos, el elemento
+   desaparecía del DOM. En renders siguientes getElementById("drawerEmpty")
+   devolvía null y toda la actualización fallaba silenciosamente.
+   Solución: reconstruir siempre el contenido completo de #drawerItems,
+   incluyendo el estado vacío como HTML, sin depender de un nodo persistente.
+---------------------------------------------------------------- */
+function renderCarrito() {
+  try {
+    const lista = document.getElementById("drawerItems");
+    const totalEl = document.getElementById("drawerTotal");
+    const counters = document.querySelectorAll(".cart-count");
+
+    const total = calcTotal();
+    const qty = carrito.reduce((s, p) => s + p.cantidad, 0);
+
+    /* -- Actualizar todos los contadores de la navbar en tiempo real -- */
+    counters.forEach((el) => (el.textContent = qty));
+
+    if (!lista) return;
+
+    if (carrito.length === 0) {
+      /* Estado vacío: se inyecta como HTML para que siempre exista */
+      lista.innerHTML = `
+        <div class="drawer-empty" style="display:flex; flex-direction:column; align-items:center; gap:12px; padding:40px 20px; color:#aaa;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" width="56" height="56">
+            <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
+            <line x1="3" y1="6" x2="21" y2="6"/>
+            <path d="M16 10a4 4 0 01-8 0"/>
+          </svg>
+          <p style="margin:0; font-size:0.95rem;">Tu bolsa está vacía</p>
+        </div>`;
+    } else {
+      /* Productos: reconstruir lista completa — sin referencias a nodos viejos */
+      lista.innerHTML = carrito
+        .map(
+          (p, i) => `
+          <div class="cart-item">
+            <div class="cart-item-info">
+              <div class="cart-item-name">${p.nombre}</div>
+              <div class="cart-item-qty">
+                <button class="qty-btn" onclick="cambiarCantidad(${i}, -1)" title="Quitar uno">−</button>
+                <span>${p.cantidad}</span>
+                <button class="qty-btn" onclick="cambiarCantidad(${i}, 1)" title="Agregar uno">+</button>
+                · S/ ${p.precio.toFixed(2)} c/u
+              </div>
+            </div>
+            <div class="cart-item-price">S/ ${(p.precio * p.cantidad).toFixed(2)}</div>
+            <button class="cart-item-remove" onclick="eliminarItem(${i})" title="Eliminar">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>`,
+        )
+        .join("");
+    }
+
+    if (totalEl) totalEl.textContent = `S/ ${total.toFixed(2)}`;
+  } catch (e) {
+    console.error("Error en renderCarrito:", e);
   }
 }
 
+/* ---- Toggle drawer ---- */
+function toggleCarrito() {
+  document.getElementById("cartDrawer").classList.toggle("open");
+  document.getElementById("cartOverlay").classList.toggle("open");
+}
+function cerrarCarrito() {
+  document.getElementById("cartDrawer").classList.remove("open");
+  document.getElementById("cartOverlay").classList.remove("open");
+}
+
+/* ---- Open purchase modal ---- */
 function abrirModalCompra() {
   if (carrito.length === 0) {
-    mostrarNotificacion("Agrega productos a tu bolsa primero");
+    notif("Agrega productos a tu bolsa primero");
     return;
   }
-  const modal = document.getElementById("modalCompra");
-  const resumen = document.getElementById("resumenCompra");
 
-  let resumenHTML = `
-    <div class="modal-resumen-item">
-      <strong>Productos:</strong>
-      <span>${carrito.reduce((sum, p) => sum + p.cantidad, 0)}</span>
-    </div>
-  `;
-  carrito.forEach((producto) => {
-    const subtotal = producto.precio * producto.cantidad;
-    resumenHTML += `
-      <div class="modal-resumen-item">
-        <span>${producto.nombre} (x${producto.cantidad})</span>
-        <span>S/ ${subtotal.toFixed(2)}</span>
-      </div>
-    `;
-  });
-  resumenHTML += `
-    <div class="modal-resumen-item modal-resumen-total">
-      <span>Total:</span>
+  const total = calcTotal();
+  let html = carrito
+    .map(
+      (p) => `
+    <div class="modal-summary-item">
+      <span>${p.nombre} (×${p.cantidad})</span>
+      <strong>S/ ${(p.precio * p.cantidad).toFixed(2)}</strong>
+    </div>`,
+    )
+    .join("");
+
+  html += `
+    <div class="modal-summary-total">
+      <span>Total</span>
       <span>S/ ${total.toFixed(2)}</span>
-    </div>
-  `;
-  resumen.innerHTML = resumenHTML;
-  modal.classList.add("active");
+    </div>`;
+
+  document.getElementById("modalResumen").innerHTML = html;
+  document.getElementById("modalCompra").classList.add("open");
+  cerrarCarrito();
 }
 
 function cerrarModalCompra() {
-  document.getElementById("modalCompra").classList.remove("active");
+  document.getElementById("modalCompra").classList.remove("open");
 }
 
-function procesarCompra(event) {
-  event.preventDefault();
+/* ---- Process purchase ---- */
+function procesarCompra(e) {
+  e.preventDefault();
 
-  // Validar que no sea vacío
   if (carrito.length === 0) {
-    mostrarNotificacion("Tu carrito está vacío");
+    notif("Tu carrito está vacío");
     return;
   }
 
   const nombre = document.getElementById("nombre").value.trim();
+  const apellido = document.getElementById("apellido").value.trim();
   const email = document.getElementById("email").value.trim();
   const telefono = document.getElementById("telefono").value.trim();
+  const region = document.getElementById("region").value.trim();
+  const distrito = document.getElementById("distrito").value.trim();
   const direccion = document.getElementById("direccion").value.trim();
+  const numero = document.getElementById("numero").value.trim();
+  const codigo = document.getElementById("codigo").value.trim();
+  const referencia = document.getElementById("referencia").value.trim();
+  const metodo = document.getElementById("metodo").value.trim();
   const notas = document.getElementById("notas").value.trim();
 
-  // Validar campos requeridos
-  if (!nombre || !email || !telefono || !direccion) {
-    mostrarNotificacion("Por favor completa todos los campos requeridos");
+  if (
+    !nombre ||
+    !apellido ||
+    !email ||
+    !telefono ||
+    !region ||
+    !distrito ||
+    !direccion ||
+    !numero ||
+    !metodo
+  ) {
+    notif("Por favor completa todos los campos requeridos");
     return;
   }
 
-  // Desabilitar botón mientras se procesa
-  const btnSubmit = event.target.querySelector('button[type="submit"]');
-  btnSubmit.disabled = true;
-  btnSubmit.style.opacity = "0.6";
-  btnSubmit.textContent = "Procesando...";
+  const btn = e.target.querySelector(".modal-submit");
+  btn.disabled = true;
+  btn.textContent = "Procesando…";
 
-  // Guardar datos temporalmente
-  const datosCompra = {
-    nombre,
-    email,
-    telefono,
-    direccion,
-    notas,
-    total: total.toFixed(2),
-    productos: [...carrito],
-    fecha: new Date().toLocaleDateString("es-PE"),
-  };
+  const total = calcTotal();
+  const fecha = new Date().toLocaleDateString("es-PE");
+  const nombreCompleto = `${nombre} ${apellido}`;
+  const direccionCompleta = `${direccion}, ${numero}, ${distrito}, ${region}${codigo ? `, ${codigo}` : ""}`;
 
-  // Construir mensaje para WhatsApp
-  let mensaje = `*NUEVA COMPRA*%0A%0A`;
-  mensaje += `*Cliente:* ${nombre}%0A`;
-  mensaje += `*Email:* ${email}%0A`;
-  mensaje += `*Teléfono:* ${telefono}%0A`;
-  mensaje += `*Dirección:* ${direccion}%0A%0A`;
-  mensaje += `*PRODUCTOS:*%0A`;
-  carrito.forEach((producto) => {
-    const subtotal = producto.precio * producto.cantidad;
-    mensaje += `- ${producto.nombre} (x${producto.cantidad}) - S/ ${subtotal.toFixed(2)}%0A`;
+  let msg = `*NUEVA COMPRA — CESAR MODAS*%0A%0A`;
+  msg += `*CLIENTE*%0A`;
+  msg += `Nombre: ${nombreCompleto}%0A`;
+  msg += `Email: ${email}%0A`;
+  msg += `Teléfono: ${telefono}%0A%0A`;
+  msg += `*DIRECCIÓN DE ENTREGA*%0A`;
+  msg += `${direccionCompleta}%0A`;
+  if (referencia) msg += `Referencia: ${referencia}%0A`;
+  msg += `%0A*MÉTODO DE PAGO*%0A${metodo}%0A%0A`;
+  msg += `*PRODUCTOS:%0A`;
+  carrito.forEach((p) => {
+    msg += `  • ${p.nombre} (×${p.cantidad}) — S/ ${(p.precio * p.cantidad).toFixed(2)}%0A`;
   });
-  mensaje += `%0A*TOTAL: S/ ${total.toFixed(2)}*%0A%0A`;
-  if (notas) mensaje += `*Notas:* ${notas}%0A`;
-  mensaje += `*Fecha:* ${datosCompra.fecha}%0A`;
+  msg += `%0A*TOTAL: S/ ${total.toFixed(2)}*%0A%0A`;
+  if (notas) msg += `*Notas Especiales:*%0A${notas}%0A%0A`;
+  msg += `Fecha: ${fecha}`;
 
-  // Abrir WhatsApp (sin cerrar el modal aún)
-  window.open(`https://wa.me/51922277161?text=${mensaje}`, "_blank");
+  window.open(`https://wa.me/51922277161?text=${msg}`, "_blank");
 
-  // Mostrar pantalla de éxito
   setTimeout(() => {
-    mostrarPantallaExito(datosCompra);
-
-    // Cerrar modal
+    mostrarExito({
+      nombre: nombreCompleto,
+      email,
+      telefono,
+      direccion: direccionCompleta,
+      metodo,
+      total: total.toFixed(2),
+      fecha,
+    });
     cerrarModalCompra();
-
-    // Limpiar datos después de mostrar el mensaje
-    document.getElementById("formCompra").reset();
+    e.target.reset();
+    btn.disabled = false;
+    btn.textContent = "Completar Compra";
     carrito = [];
-    total = 0;
-    guardarCarrito();
-    actualizarCarrito();
-    toggleCarrito();
+    guardar();
+    renderCarrito();
   }, 500);
 }
 
-function mostrarPantallaExito(datos) {
-  // Crear overlay de éxito si no existe
-  let successOverlay = document.getElementById("successOverlay");
-  if (!successOverlay) {
-    successOverlay = document.createElement("div");
-    successOverlay.id = "successOverlay";
-    successOverlay.className = "success-overlay";
-    successOverlay.innerHTML = `
+/* ---- Success screen ---- */
+function mostrarExito(datos) {
+  let sc = document.getElementById("successScreen");
+  if (!sc) {
+    sc = document.createElement("div");
+    sc.id = "successScreen";
+    sc.className = "success-screen";
+    sc.innerHTML = `
       <div class="success-card">
         <div class="success-icon">✓</div>
-        <h2>¡COMPRA RECIBIDA!</h2>
-        <p>Tu pedido ha sido enviado exitosamente por WhatsApp. Nos pondremos en contacto pronto.</p>
-        <div class="success-details">
-          <strong>Resumen del Pedido:</strong>
-          Cliente: ${datos.nombre}<br>
-          Email: ${datos.email}<br>
-          Teléfono: ${datos.telefono}<br><br>
-          <strong style="color: #4CAF50;">Total: S/ ${datos.total}</strong><br>
-          Fecha: ${datos.fecha}
-        </div>
-        <button class="success-button" onclick="cerrarPantallaExito()">Continuar Comprando</button>
-      </div>
-    `;
-    document.body.appendChild(successOverlay);
+        <h2>¡Pedido Enviado!</h2>
+        <p>Tu orden fue enviada por WhatsApp exitosamente.<br>Nos pondremos en contacto muy pronto.</p>
+        <div class="success-info" id="successInfo"></div>
+        <button class="btn-primary" style="max-width:280px;margin:0 auto;" onclick="cerrarExito()">
+          Continuar Comprando
+        </button>
+      </div>`;
+    document.body.appendChild(sc);
   }
 
-  // Mostrar pantalla de éxito
-  successOverlay.classList.add("show");
+  document.getElementById("successInfo").innerHTML = `
+    <strong>Resumen del Pedido</strong>
+    Cliente: ${datos.nombre}<br>
+    Email: ${datos.email}<br>
+    Teléfono: ${datos.telefono}
+    <span class="success-total">Total: S/ ${datos.total}</span>
+    Fecha: ${datos.fecha}`;
 
-  // Auto-cerrar después de 15 segundos
+  sc.classList.add("open");
+  setTimeout(cerrarExito, 15000);
+}
+
+function cerrarExito() {
+  const sc = document.getElementById("successScreen");
+  if (sc) sc.classList.remove("open");
+}
+
+/* ---- Notification toast ---- */
+function notif(msg) {
+  const n = document.createElement("div");
+  n.className = "notif";
+  n.textContent = msg;
+  document.body.appendChild(n);
   setTimeout(() => {
-    cerrarPantallaExito();
-  }, 15000);
+    n.style.transition = "opacity 0.3s, transform 0.3s";
+    n.style.opacity = "0";
+    n.style.transform = "translateX(30px)";
+    setTimeout(() => n.remove(), 300);
+  }, 2600);
 }
 
-function cerrarPantallaExito() {
-  const successOverlay = document.getElementById("successOverlay");
-  if (successOverlay) {
-    successOverlay.classList.remove("show");
+/* ---- Keyboard events ---- */
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") {
+    cerrarCarrito();
+    cerrarModalCompra();
+    cerrarExito();
   }
-}
+});
 
-function mostrarNotificacion(mensaje) {
-  const notif = document.createElement("div");
-  notif.textContent = mensaje;
-  notif.style.cssText = `
-    position: fixed;
-    bottom: 110px;
-    right: 30px;
-    background: #000;
-    color: #fff;
-    padding: 15px 25px;
-    border-radius: 4px;
-    font-size: 13px;
-    z-index: 500;
-    animation: slideIn 0.3s ease;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-  `;
-  document.body.appendChild(notif);
-
-  setTimeout(() => {
-    notif.style.animation = "slideOut 0.3s ease";
-    setTimeout(() => notif.remove(), 300);
-  }, 2500);
-}
-
-// Cerrar modal al hacer clic fuera
-window.onclick = function (event) {
-  const modal = document.getElementById("modalCompra");
-  if (event.target === modal) cerrarModalCompra();
-};
-
-// Cerrar carrito al presionar ESC
-document.addEventListener("keydown", function (event) {
-  if (event.key === "Escape") {
-    const panel = document.getElementById("carritoPanel");
-    if (panel.classList.contains("active")) {
-      toggleCarrito();
-    }
-    const modal = document.getElementById("modalCompra");
-    if (modal.classList.contains("active")) {
-      cerrarModalCompra();
-    }
-  }
+/* ---- Init ---- */
+document.addEventListener("DOMContentLoaded", () => {
+  renderCarrito();
 });

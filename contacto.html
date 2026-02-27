@@ -1,150 +1,216 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cesar Modas - Contacto</title>
-    <link rel="icon" type="image/jpeg" href="images/logo-fondo-blanco.jpeg">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="estilos.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contacto — Cesar Modas</title>
+  <link rel="icon" type="image/jpeg" href="images/logo-fondo-blanco.jpeg">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="estilos.css">
 </head>
 <body>
-    <!-- Header -->
-    <header>
-        <a href="index.html" class="logo"><img src="images/logofondo-transparente.png" alt="Cesar Modas" style="height: 40px;"></a>
-        <nav>
-            <a href="index.html">Inicio</a>
-            <a href="tienda.html">Tienda</a>
-            <a href="nosotros.html">Nosotros</a>
-            <a href="contacto.html" class="activo">Contacto</a>
-        </nav>
-    </header>
 
-    <!-- Carrito -->
-    <div class="carrito-icono" onclick="toggleCarrito()">
-        <i class="fas fa-shopping-bag"></i>
-        <span id="contador">0</span>
+  <!-- ===== NAVBAR ===== -->
+  <header class="navbar">
+    <nav class="nav-left">
+      <a href="index.html" class="nav-link">Inicio</a>
+      <a href="tienda.html" class="nav-link">Tienda</a>
+    </nav>
+
+    <a href="index.html" class="nav-logo">
+      <img src="images/logofondo-transparente.png" alt="Cesar Modas">
+    </a>
+
+    <div class="nav-right">
+      <a href="nosotros.html" class="nav-link">Nosotros</a>
+      <a href="contacto.html" class="nav-link active">Contacto</a>
+      <button class="cart-btn" onclick="toggleCarrito()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
+          <line x1="3" y1="6" x2="21" y2="6"/>
+          <path d="M16 10a4 4 0 01-8 0"/>
+        </svg>
+        <span class="label">Bolsa</span>
+        <span class="cart-count">0</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ===== CART OVERLAY + DRAWER ===== -->
+  <div class="cart-overlay" id="cartOverlay" onclick="cerrarCarrito()"></div>
+
+  <aside class="cart-drawer" id="cartDrawer">
+    <div class="drawer-head">
+      <h3>Bolsa de Compras</h3>
+      <button class="drawer-close" onclick="cerrarCarrito()">
+        <i class="fas fa-times"></i>
+      </button>
     </div>
 
-    <div class="overlay" id="overlay" onclick="toggleCarrito()"></div>
+    <!-- drawerItems vacío: renderCarrito() inyecta el contenido en tiempo real -->
+    <div class="drawer-items" id="drawerItems"></div>
 
-    <div class="carrito-panel" id="carritoPanel">
-        <h3>Bolsa de Compras</h3>
-        <div id="carritoVacio" class="carrito-vacio">
-            <div class="carrito-vacio-icon"><i class="fas fa-box"></i></div>
-            <p>Tu bolsa está vacía</p>
-        </div>
-        <ul id="listaCarrito"></ul>
-        <div class="carrito-resumen">
-            <div class="carrito-total">
-                <span>Total:</span>
-                <span>S/ <span id="total">0.00</span></span>
-            </div>
-            <div class="carrito-botones">
-                <button class="btn-comprar" onclick="abrirModalCompra()">Proceder a Compra</button>
-                <button class="btn-vaciar" onclick="vaciarCarrito()">Vaciar Bolsa</button>
-            </div>
-        </div>
+    <div class="drawer-foot">
+      <div class="drawer-total">
+        <span>Total</span>
+        <span id="drawerTotal">S/ 0.00</span>
+      </div>
+      <div class="drawer-actions">
+        <button class="btn-primary" onclick="abrirModalCompra()">Proceder a Compra</button>
+        <button class="btn-ghost" onclick="vaciarCarrito()">Vaciar Bolsa</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ===== PURCHASE MODAL ===== -->
+  <div class="modal-backdrop" id="modalCompra" onclick="if(event.target===this)cerrarModalCompra()">
+    <div class="modal-box">
+      <div class="modal-head">
+        <h2>Finalizar Compra</h2>
+        <button class="modal-close" onclick="cerrarModalCompra()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="modal-scroll">
+        <div class="modal-summary" id="modalResumen"></div>
+        <form id="formCompra" onsubmit="procesarCompra(event)">
+          <div class="form-group form-group-half">
+            <label>Nombre *</label>
+            <input type="text" id="nombre" required placeholder="Juan">
+          </div>
+          <div class="form-group form-group-half">
+            <label>Apellido *</label>
+            <input type="text" id="apellido" required placeholder="García López">
+          </div>
+          <div class="form-group">
+            <label>Correo Electrónico *</label>
+            <input type="email" id="email" required placeholder="tu.correo@ejemplo.com">
+          </div>
+          <div class="form-group">
+            <label>Teléfono / WhatsApp *</label>
+            <input type="tel" id="telefono" required placeholder="+51 999 888 777">
+          </div>
+          <div class="form-group form-group-half">
+            <label>Región/Departamento *</label>
+            <select id="region" required>
+              <option value="">Seleccionar...</option>
+              <option value="Lima">Lima</option>
+              <option value="Arequipa">Arequipa</option>
+              <option value="Callao">Callao</option>
+              <option value="La Libertad">La Libertad</option>
+              <option value="Ayacucho">Ayacucho</option>
+              <option value="Junín">Junín</option>
+              <option value="Otras">Otra región</option>
+            </select>
+          </div>
+          <div class="form-group form-group-half">
+            <label>Distrito/Provincia *</label>
+            <input type="text" id="distrito" required placeholder="San Isidro">
+          </div>
+          <div class="form-group">
+            <label>Dirección Principal *</label>
+            <input type="text" id="direccion" required placeholder="Av. Paseo de la República 3500">
+          </div>
+          <div class="form-group form-group-half">
+            <label>Número/Casa *</label>
+            <input type="text" id="numero" required placeholder="Apt. 1203">
+          </div>
+          <div class="form-group form-group-half">
+            <label>Código Postal</label>
+            <input type="text" id="codigo" placeholder="15073">
+          </div>
+          <div class="form-group">
+            <label>Referencia</label>
+            <input type="text" id="referencia" placeholder="Frente a banco BCP">
+          </div>
+          <div class="form-group">
+            <label>Método de Pago *</label>
+            <select id="metodo" required>
+              <option value="">Seleccionar...</option>
+              <option value="Transferencia">Transferencia Bancaria</option>
+              <option value="Depósito">Depósito en Cuenta</option>
+              <option value="Efectivo">Efectivo contra Entrega</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Notas Especiales</label>
+            <textarea id="notas" placeholder="Talla, color, preferencias de horario…"></textarea>
+          </div>
+          <button type="submit" class="modal-submit">
+            Completar Compra
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== PAGE HEADER ===== -->
+  <div class="page-header">
+    <span class="eyebrow">Atención Premium</span>
+    <h1>Contacto</h1>
+    <p>Centro de Atención al Cliente — Disponible para ti</p>
+  </div>
+
+  <!-- ===== CONTENT ===== -->
+  <div class="info-page">
+    <h2>Canales de Atención</h2>
+
+    <div class="contact-dato">
+      <div class="contact-dato-icon">
+        <i class="fas fa-phone"></i>
+      </div>
+      <div class="contact-dato-text">
+        <strong>Teléfono / WhatsApp</strong>
+        <span>+51 922 277 161</span>
+      </div>
     </div>
 
-    <!-- Modal de Compra -->
-    <div class="modal" id="modalCompra">
-        <div class="modal-contenido">
-            <span class="modal-close" onclick="cerrarModalCompra()">&times;</span>
-            <h2>Finalizar Compra</h2>
-            <div class="modal-resumen" id="resumenCompra"></div>
-            <form id="formCompra" onsubmit="procesarCompra(event)">
-                <div class="form-group">
-                    <label for="nombre">Nombre Completo *</label>
-                    <input type="text" id="nombre" name="nombre" required>
-                </div>
-                <div class="form-group">
-                    <label for="email">Correo Electrónico *</label>
-                    <input type="email" id="email" name="email" required>
-                </div>
-                <div class="form-group">
-                    <label for="telefono">Teléfono *</label>
-                    <input type="tel" id="telefono" name="telefono" required>
-                </div>
-                <div class="form-group">
-                    <label for="direccion">Dirección de Entrega *</label>
-                    <textarea id="direccion" name="direccion" required></textarea>
-                </div>
-                <div class="form-group">
-                    <label for="notas">Notas Adicionales</label>
-                    <textarea id="notas" name="notas" placeholder="Especificaciones, tamaños, colores, etc..."></textarea>
-                </div>
-                <button type="submit" style="width:100%;background:#000;color:white;border-color:#000;padding:15px;">
-                    Completar Compra
-                </button>
-            </form>
-        </div>
+    <div class="contact-dato">
+      <div class="contact-dato-icon">
+        <i class="fas fa-envelope"></i>
+      </div>
+      <div class="contact-dato-text">
+        <strong>Correo Electrónico</strong>
+        <span>ventas@cesarmodas.com</span>
+      </div>
     </div>
 
-    <!-- Encabezado de página -->
-    <div class="page-header">
-        <h1>CONTACTO</h1>
-        <p>Centro de Atención Premium — Disponible para ti</p>
+    <div class="contact-dato">
+      <div class="contact-dato-icon">
+        <i class="fas fa-clock"></i>
+      </div>
+      <div class="contact-dato-text">
+        <strong>Horario de Atención</strong>
+        <span>Lunes a Sábado — 10:00 AM a 7:00 PM</span>
+      </div>
     </div>
 
-    <!-- Contenido -->
-    <div class="info-page">
-        <h2>Centro de Atención al Cliente</h2>
-
-        <div class="dato">
-            <div class="dato-icono"><i class="fas fa-phone"></i></div>
-            <div>
-                <strong>TELÉFONO / WHATSAPP</strong>
-                +51 999 888 777
-            </div>
-        </div>
-
-        <div class="dato">
-            <div class="dato-icono"><i class="fas fa-envelope"></i></div>
-            <div>
-                <strong>CORREO ELECTRÓNICO</strong>
-                ventas@cesarmodas.com
-            </div>
-        </div>
-
-        <div class="dato">
-            <div class="dato-icono"><i class="fas fa-clock"></i></div>
-            <div>
-                <strong>HORARIO DE ATENCIÓN</strong>
-                Lunes a Sábado — 10:00 AM a 7:00 PM
-            </div>
-        </div>
-
-        <div class="dato">
-            <div class="dato-icono"><i class="fas fa-map-marker-alt"></i></div>
-            <div>
-                <strong>UBICACIÓN</strong>
-                Lima, Perú
-            </div>
-        </div>
-
-        <div style="margin-top: 50px; text-align: center;">
-            <p style="margin-bottom: 25px; font-size: 14px; color: #777; letter-spacing: 1px;">
-                ¿TIENES UNA CONSULTA DE MODA? CONTÁCTANOS
-            </p>
-            <a href="https://wa.me/51999888777?text=Hola%2C%20me%20interesa%20hacer%20una%20consulta" 
-               target="_blank"
-               style="display:inline-block;padding:16px 50px;background:#25D366;color:white;text-decoration:none;font-size:14px;letter-spacing:2px;transition:all 0.3s ease;"
-               onmouseover="this.style.opacity='0.85'"
-               onmouseout="this.style.opacity='1'">
-                <i class="fas fa-comment"></i> ESCRIBIR POR WHATSAPP
-            </a>
-        </div>
+    <div class="contact-dato">
+      <div class="contact-dato-icon">
+        <i class="fas fa-map-marker-alt"></i>
+      </div>
+      <div class="contact-dato-text">
+        <strong>Ubicación</strong>
+        <span>Lima, Perú</span>
+      </div>
     </div>
 
-    <!-- Footer -->
-    <footer>
-        © 2026 CESAR MODAS - Todos los derechos reservados | Diseño Premium Exclusivo
-    </footer>
+    <div class="contact-cta">
+      <p>¿Tienes una consulta de moda? Escríbenos</p>
+      <a href="https://wa.me/51922277161?text=Hola%2C%20me%20interesa%20hacer%20una%20consulta"
+         target="_blank" class="btn-whatsapp">
+        <i class="fas fa-comment"></i>
+        Escribir por WhatsApp
+      </a>
+    </div>
+  </div>
 
-    <!-- WhatsApp -->
-    <a href="https://wa.me/51999888777?text=Hola%2C%20me%20interesa%20conocer%20m%C3%A1s%20sobre%20sus%20productos" target="_blank" class="whatsapp" title="Contáctanos por WhatsApp"><i class="fas fa-comment"></i></a>
+  <!-- ===== FOOTER ===== -->
+  <footer>
+    <span class="footer-copy">© 2026 Cesar Modas — Todos los derechos reservados</span>
+    <span class="footer-brand">CESAR MODAS</span>
+  </footer>
 
-    <script src="carrito.js"></script>
+  <script src="carrito.js"></script>
 </body>
 </html>

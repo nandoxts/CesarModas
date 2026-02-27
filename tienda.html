@@ -1,223 +1,285 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cesar Modas - Tienda</title>
-    <link rel="icon" type="image/jpeg" href="images/logo-fondo-blanco.jpeg">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="estilos.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tienda — Cesar Modas</title>
+  <link rel="icon" type="image/jpeg" href="images/logo-fondo-blanco.jpeg">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="estilos.css">
 </head>
 <body>
-    <!-- Header -->
-    <header>
-        <a href="index.html" class="logo"><img src="images/logofondo-transparente.png" alt="Cesar Modas" style="height: 40px;"></a>
-        <nav>
-            <a href="index.html">Inicio</a>
-            <a href="tienda.html" class="activo">Tienda</a>
-            <a href="nosotros.html">Nosotros</a>
-            <a href="contacto.html">Contacto</a>
-        </nav>
-    </header>
 
-    <!-- Carrito -->
-    <div class="carrito-icono" onclick="toggleCarrito()">
-        <i class="fas fa-shopping-bag"></i>
-        <span id="contador">0</span>
+  <!-- ===== NAVBAR ===== -->
+  <header class="navbar">
+    <nav class="nav-left">
+      <a href="index.html" class="nav-link">Inicio</a>
+      <a href="tienda.html" class="nav-link active">Tienda</a>
+    </nav>
+
+    <a href="index.html" class="nav-logo">
+      <img src="images/logofondo-transparente.png" alt="Cesar Modas">
+    </a>
+
+    <div class="nav-right">
+      <a href="nosotros.html" class="nav-link">Nosotros</a>
+      <a href="contacto.html" class="nav-link">Contacto</a>
+      <button class="cart-btn" onclick="toggleCarrito()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
+          <line x1="3" y1="6" x2="21" y2="6"/>
+          <path d="M16 10a4 4 0 01-8 0"/>
+        </svg>
+        <span class="label">Bolsa</span>
+        <span class="cart-count">0</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ===== CART OVERLAY + DRAWER ===== -->
+  <div class="cart-overlay" id="cartOverlay" onclick="cerrarCarrito()"></div>
+
+  <aside class="cart-drawer" id="cartDrawer">
+    <div class="drawer-head">
+      <h3>Bolsa de Compras</h3>
+      <button class="drawer-close" onclick="cerrarCarrito()">
+        <i class="fas fa-times"></i>
+      </button>
     </div>
 
-    <div class="overlay" id="overlay" onclick="toggleCarrito()"></div>
+    <!-- drawerItems vacío: renderCarrito() inyecta el contenido en tiempo real -->
+    <div class="drawer-items" id="drawerItems"></div>
 
-    <div class="carrito-panel" id="carritoPanel">
-        <h3>Bolsa de Compras</h3>
-        <div id="carritoVacio" class="carrito-vacio">
-            <div class="carrito-vacio-icon"><i class="fas fa-box"></i></div>
-            <p>Tu bolsa está vacía</p>
-        </div>
-        <ul id="listaCarrito"></ul>
-        <div class="carrito-resumen">
-            <div class="carrito-total">
-                <span>Total:</span>
-                <span>S/ <span id="total">0.00</span></span>
-            </div>
-            <div class="carrito-botones">
-                <button class="btn-comprar" onclick="abrirModalCompra()">Proceder a Compra</button>
-                <button class="btn-vaciar" onclick="vaciarCarrito()">Vaciar Bolsa</button>
-            </div>
-        </div>
+    <div class="drawer-foot">
+      <div class="drawer-total">
+        <span>Total</span>
+        <span id="drawerTotal">S/ 0.00</span>
+      </div>
+      <div class="drawer-actions">
+        <button class="btn-primary" onclick="abrirModalCompra()">Proceder a Compra</button>
+        <button class="btn-ghost" onclick="vaciarCarrito()">Vaciar Bolsa</button>
+      </div>
     </div>
+  </aside>
 
-    <!-- Modal de Compra -->
-    <div class="modal" id="modalCompra">
-        <div class="modal-contenido">
-            <span class="modal-close" onclick="cerrarModalCompra()">&times;</span>
-            <h2>Finalizar Compra</h2>
-            <div class="modal-resumen" id="resumenCompra"></div>
-            <form id="formCompra" onsubmit="procesarCompra(event)">
-                <div class="form-group">
-                    <label for="nombre">Nombre Completo *</label>
-                    <input type="text" id="nombre" name="nombre" required>
-                </div>
-                <div class="form-group">
-                    <label for="email">Correo Electrónico *</label>
-                    <input type="email" id="email" name="email" required>
-                </div>
-                <div class="form-group">
-                    <label for="telefono">Teléfono *</label>
-                    <input type="tel" id="telefono" name="telefono" required>
-                </div>
-                <div class="form-group">
-                    <label for="direccion">Dirección de Entrega *</label>
-                    <textarea id="direccion" name="direccion" required></textarea>
-                </div>
-                <div class="form-group">
-                    <label for="notas">Notas Adicionales</label>
-                    <textarea id="notas" name="notas" placeholder="Especificaciones, tamaños, colores, etc..."></textarea>
-                </div>
-                <button type="submit" style="width:100%;background:#000;color:white;border-color:#000;padding:15px;">
-                    Completar Compra
-                </button>
-            </form>
-        </div>
+  <!-- ===== PURCHASE MODAL ===== -->
+  <div class="modal-backdrop" id="modalCompra" onclick="if(event.target===this)cerrarModalCompra()">
+    <div class="modal-box">
+      <div class="modal-head">
+        <h2>Finalizar Compra</h2>
+        <button class="modal-close" onclick="cerrarModalCompra()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="modal-scroll">
+        <div class="modal-summary" id="modalResumen"></div>
+        <form id="formCompra" onsubmit="procesarCompra(event)">
+          <div class="form-group form-group-half">
+            <label>Nombre *</label>
+            <input type="text" id="nombre" required placeholder="Juan">
+          </div>
+          <div class="form-group form-group-half">
+            <label>Apellido *</label>
+            <input type="text" id="apellido" required placeholder="García López">
+          </div>
+          <div class="form-group">
+            <label>Correo Electrónico *</label>
+            <input type="email" id="email" required placeholder="tu.correo@ejemplo.com">
+          </div>
+          <div class="form-group">
+            <label>Teléfono / WhatsApp *</label>
+            <input type="tel" id="telefono" required placeholder="+51 999 888 777">
+          </div>
+          <div class="form-group form-group-half">
+            <label>Región/Departamento *</label>
+            <select id="region" required>
+              <option value="">Seleccionar...</option>
+              <option value="Lima">Lima</option>
+              <option value="Arequipa">Arequipa</option>
+              <option value="Callao">Callao</option>
+              <option value="La Libertad">La Libertad</option>
+              <option value="Ayacucho">Ayacucho</option>
+              <option value="Junín">Junín</option>
+              <option value="Otras">Otra región</option>
+            </select>
+          </div>
+          <div class="form-group form-group-half">
+            <label>Distrito/Provincia *</label>
+            <input type="text" id="distrito" required placeholder="San Isidro">
+          </div>
+          <div class="form-group">
+            <label>Dirección Principal *</label>
+            <input type="text" id="direccion" required placeholder="Av. Paseo de la República 3500">
+          </div>
+          <div class="form-group form-group-half">
+            <label>Número/Casa *</label>
+            <input type="text" id="numero" required placeholder="Apt. 1203">
+          </div>
+          <div class="form-group form-group-half">
+            <label>Código Postal</label>
+            <input type="text" id="codigo" placeholder="15073">
+          </div>
+          <div class="form-group">
+            <label>Referencia</label>
+            <input type="text" id="referencia" placeholder="Frente a banco BCP">
+          </div>
+          <div class="form-group">
+            <label>Método de Pago *</label>
+            <select id="metodo" required>
+              <option value="">Seleccionar...</option>
+              <option value="Transferencia">Transferencia Bancaria</option>
+              <option value="Depósito">Depósito en Cuenta</option>
+              <option value="Efectivo">Efectivo contra Entrega</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Notas Especiales</label>
+            <textarea id="notas" placeholder="Talla, color, preferencias de horario…"></textarea>
+          </div>
+          <button type="submit" class="modal-submit">
+            Completar Compra
+          </button>
+        </form>
+      </div>
     </div>
+  </div>
 
-    <!-- Encabezado de página -->
-    <div class="page-header">
-        <h1>COLECCIÓN EXCLUSIVA</h1>
-        <p>Prendas de Lujo y Distinción — Edición 2026</p>
+  <!-- ===== PAGE HEADER ===== -->
+  <div class="page-header">
+    <span class="eyebrow">Edición 2026</span>
+    <h1>Colección Exclusiva</h1>
+    <p>Prendas de lujo y distinción — Confeccionadas con los mejores materiales</p>
+  </div>
+
+  <!-- ===== PRODUCTS ===== -->
+  <section class="productos-section">
+    <div class="productos-grid">
+
+      <!-- Polo Esencial -->
+      <article class="product-card">
+        <div class="product-img-wrap">
+          <span class="product-badge">Nuevo</span>
+          <img src="images/polo.jpeg" alt="Polo Esencial">
+          <div class="product-add-overlay">
+            <button class="btn-add" onclick="agregarCarrito('Polo Esencial', 49.90)">
+              <i class="fas fa-plus"></i> Agregar
+            </button>
+          </div>
+        </div>
+        <div class="product-info">
+          <div>
+            <div class="product-name">Polo Esencial</div>
+            <div class="product-material">100% Algodón Premium</div>
+          </div>
+          <div class="product-price">S/ 49.90</div>
+        </div>
+      </article>
+
+      <!-- Blazer Clásico -->
+      <article class="product-card">
+        <div class="product-img-wrap">
+          <img src="images/Blazer Clásico.jpg" alt="Blazer Clásico">
+          <div class="product-add-overlay">
+            <button class="btn-add" onclick="agregarCarrito('Blazer Clásico', 129.90)">
+              <i class="fas fa-plus"></i> Agregar
+            </button>
+          </div>
+        </div>
+        <div class="product-info">
+          <div>
+            <div class="product-name">Blazer Clásico</div>
+            <div class="product-material">Lana Italiana Importada</div>
+          </div>
+          <div class="product-price">S/ 129.90</div>
+        </div>
+      </article>
+
+      <!-- Pantalón Gris -->
+      <article class="product-card">
+        <div class="product-img-wrap">
+          <img src="images/Pantalon gris.png" alt="Pantalón Gris">
+          <div class="product-add-overlay">
+            <button class="btn-add" onclick="agregarCarrito('Pantalón Gris', 79.90)">
+              <i class="fas fa-plus"></i> Agregar
+            </button>
+          </div>
+        </div>
+        <div class="product-info">
+          <div>
+            <div class="product-name">Pantalón Gris</div>
+            <div class="product-material">Gabardina Premium</div>
+          </div>
+          <div class="product-price">S/ 79.90</div>
+        </div>
+      </article>
+
+      <!-- Camisa Blanca -->
+      <article class="product-card">
+        <div class="product-img-wrap">
+          <img src="images/Camisa blanca.png" alt="Camisa Blanca">
+          <div class="product-add-overlay">
+            <button class="btn-add" onclick="agregarCarrito('Camisa Blanca', 59.90)">
+              <i class="fas fa-plus"></i> Agregar
+            </button>
+          </div>
+        </div>
+        <div class="product-info">
+          <div>
+            <div class="product-name">Camisa Blanca</div>
+            <div class="product-material">Algodón Egipcio 100%</div>
+          </div>
+          <div class="product-price">S/ 59.90</div>
+        </div>
+      </article>
+
+      <!-- Sweater Negro -->
+      <article class="product-card">
+        <div class="product-img-wrap">
+          <img src="images/Sweater Negro.png" alt="Sweater Negro">
+          <div class="product-add-overlay">
+            <button class="btn-add" onclick="agregarCarrito('Sweater Negro', 89.90)">
+              <i class="fas fa-plus"></i> Agregar
+            </button>
+          </div>
+        </div>
+        <div class="product-info">
+          <div>
+            <div class="product-name">Sweater Negro</div>
+            <div class="product-material">Merino Wool Premium</div>
+          </div>
+          <div class="product-price">S/ 89.90</div>
+        </div>
+      </article>
+
+      <!-- Chaqueta Denim -->
+      <article class="product-card">
+        <div class="product-img-wrap">
+          <span class="product-badge">Exclusivo</span>
+          <img src="images/Chaqueta Denim.png" alt="Chaqueta Denim">
+          <div class="product-add-overlay">
+            <button class="btn-add" onclick="agregarCarrito('Chaqueta Denim', 99.90)">
+              <i class="fas fa-plus"></i> Agregar
+            </button>
+          </div>
+        </div>
+        <div class="product-info">
+          <div>
+            <div class="product-name">Chaqueta Denim</div>
+            <div class="product-material">100% Denim Sostenible</div>
+          </div>
+          <div class="product-price">S/ 99.90</div>
+        </div>
+      </article>
+
     </div>
+  </section>
 
-    <!-- Productos -->
-    <section class="productos">
-        <div class="producto">
-            <div class="producto-content">
-                <!-- Front -->
-                <div class="producto-front">
-                    <div class="producto-img">
-                        <img src="images/polo.jpeg" alt="Polo Esencial">
-                    </div>
-                    <h3>Polo Esencial</h3>
-                    <div class="producto-precio">S/ 49.90</div>
-                </div>
-                <!-- Back -->
-                <div class="producto-back">
-                    <h4>POLO ESENCIAL</h4>
-                    <p>100% Algodón Premium</p>
-                    <p style="font-size: 12px; margin-top: 10px;">Confeccionado con los mejores materiales para máximo confort</p>
-                    <button onclick="agregarCarrito('Polo Esencial', 49.90)" style="margin-top: 15px; background: white; color: #1a3a52; border-color: white;">Agregar al Carrito</button>
-                </div>
-            </div>
-        </div>
+  <!-- ===== FOOTER ===== -->
+  <footer>
+    <span class="footer-copy">© 2026 Cesar Modas — Todos los derechos reservados</span>
+    <span class="footer-brand">CESAR MODAS</span>
+  </footer>
 
-        <div class="producto">
-            <div class="producto-content">
-                <!-- Front -->
-                <div class="producto-front">
-                    <div class="producto-img">
-                        <img src="images/Blazer Clásico.jpg" alt="Blazer Clásico">
-                    </div>
-                    <h3>Blazer Clásico</h3>
-                    <div class="producto-precio">S/ 129.90</div>
-                </div>
-                <!-- Back -->
-                <div class="producto-back">
-                    <h4>BLAZER CLÁSICO</h4>
-                    <p>Lana Italiana Importada</p>
-                    <p style="font-size: 12px; margin-top: 10px;">Perfecto para ocasiones especiales y reuniones profesionales</p>
-                    <button onclick="agregarCarrito('Blazer Clásico', 129.90)" style="margin-top: 15px; background: white; color: #1a3a52; border-color: white;">Agregar al Carrito</button>
-                </div>
-            </div>
-        </div>
-
-        <div class="producto">
-            <div class="producto-content">
-                <!-- Front -->
-                <div class="producto-front">
-                    <div class="producto-img">
-                        <img src="images/Pantalon gris.png" alt="Pantalón Gris">
-                    </div>
-                    <h3>Pantalón Gris</h3>
-                    <div class="producto-precio">S/ 79.90</div>
-                </div>
-                <!-- Back -->
-                <div class="producto-back">
-                    <h4>PANTALÓN GRIS</h4>
-                    <p>Gabardina Premium</p>
-                    <p style="font-size: 12px; margin-top: 10px;">Versátil y elegante para cualquier ocasión</p>
-                    <button onclick="agregarCarrito('Pantalón Gris', 79.90)" style="margin-top: 15px; background: white; color: #1a3a52; border-color: white;">Agregar al Carrito</button>
-                </div>
-            </div>
-        </div>
-
-        <div class="producto">
-            <div class="producto-content">
-                <!-- Front -->
-                <div class="producto-front">
-                    <div class="producto-img">
-                        <img src="images/Camisa blanca.png" alt="Camisa Blanca">
-                    </div>
-                    <h3>Camisa Blanca</h3>
-                    <div class="producto-precio">S/ 59.90</div>
-                </div>
-                <!-- Back -->
-                <div class="producto-back">
-                    <h4>CAMISA BLANCA</h4>
-                    <p>Algodón Egipcio 100%</p>
-                    <p style="font-size: 12px; margin-top: 10px;">Icónica, imprescindible en cualquier guardarropa</p>
-                    <button onclick="agregarCarrito('Camisa Blanca', 59.90)" style="margin-top: 15px; background: white; color: #1a3a52; border-color: white;">Agregar al Carrito</button>
-                </div>
-            </div>
-        </div>
-
-        <div class="producto">
-            <div class="producto-content">
-                <!-- Front -->
-                <div class="producto-front">
-                    <div class="producto-img">
-                        <img src="images/Sweater Negro.png" alt="Sweater Negro">
-                    </div>
-                    <h3>Sweater Negro</h3>
-                    <div class="producto-precio">S/ 89.90</div>
-                </div>
-                <!-- Back -->
-                <div class="producto-back">
-                    <h4>SWEATER NEGRO</h4>
-                    <p>Merino Wool Premium</p>
-                    <p style="font-size: 12px; margin-top: 10px;">Calidez y elegancia en un solo prenda</p>
-                    <button onclick="agregarCarrito('Sweater Negro', 89.90)" style="margin-top: 15px; background: white; color: #1a3a52; border-color: white;">Agregar al Carrito</button>
-                </div>
-            </div>
-        </div>
-
-        <div class="producto">
-            <div class="producto-content">
-                <!-- Front -->
-                <div class="producto-front">
-                    <div class="producto-img">
-                        <img src="images/Chaqueta Denim.png" alt="Chaqueta Denim">
-                    </div>
-                    <h3>Chaqueta Denim</h3>
-                    <div class="producto-precio">S/ 99.90</div>
-                </div>
-                <!-- Back -->
-                <div class="producto-back">
-                    <h4>CHAQUETA DENIM</h4>
-                    <p>100% Denim Sostenible</p>
-                    <p style="font-size: 12px; margin-top: 10px;">Atemporaland clásica, perfecta para tu estilo</p>
-                    <button onclick="agregarCarrito('Chaqueta Denim', 99.90)" style="margin-top: 15px; background: white; color: #1a3a52; border-color: white;">Agregar al Carrito</button>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Footer -->
-    <footer>
-        © 2026 CESAR MODAS - Todos los derechos reservados | Diseño Premium Exclusivo
-    </footer>
-
-    <!-- WhatsApp -->
-    <a href="https://wa.me/51922277161?text=Hola%2C%20me%20interesa%20conocer%20m%C3%A1s%20sobre%20sus%20productos" target="_blank" class="whatsapp" title="Contáctanos por WhatsApp"><i class="fas fa-comment"></i></a>
-
-    <script src="carrito.js"></script>
+  <script src="carrito.js"></script>
 </body>
 </html>

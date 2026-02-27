@@ -588,12 +588,14 @@ footer {
     z-index: 250;
     transition: background 0.4s ease;
     backdrop-filter: blur(0px);
+    pointer-events: none;
 }
 
 .overlay.active { 
     display: block;
     background: rgba(26, 58, 82, 0.7);
     backdrop-filter: blur(3px);
+    pointer-events: auto;
 }
 
 /* WhatsApp */

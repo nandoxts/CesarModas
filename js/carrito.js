@@ -242,7 +242,7 @@ function procesarCompra(e) {
   if (notas) msg += `*Notas Especiales:*%0A${notas}%0A%0A`;
   msg += `Fecha: ${fecha}`;
 
-  window.open(`https://wa.me/51922277161?text=${msg}`, "_blank");
+  window.open(`https://wa.me/51969216414?text=${msg}`, "_blank");
 
   setTimeout(() => {
     mostrarExito({
